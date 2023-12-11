@@ -88,7 +88,7 @@ export class ContractsService {
       asi_usrmod: user.usr_nombres + ' ' + user.usr_apellidos,
       asi_codhor: codHor, 
     };
-    return this.prisma.mar_asi_asignacion.update({
+    return await this.prisma.mar_asi_asignacion.update({
       where:{ asi_codigo:asiCode },
       data
     });
@@ -228,11 +228,17 @@ export class ContractsService {
           },
         },
       },
-    });
+    }); 
     var employes = [];
-    for (let index = 0; index < empleados[0].mar_asi_asignacion.length; index++) {
-      const element = empleados[0].mar_asi_asignacion[index];
-      employes.push(element);
+    for (let index = 0; index < empleados.length; index++) {
+      const element = empleados[index]; 
+      for (let i = 0; i < element.mar_asi_asignacion.length; i++) {
+        const element2 = element.mar_asi_asignacion[i];
+        if(element2!=null){
+          employes.push(element2);
+        }
+      }
+
     }
 
     return employes;
