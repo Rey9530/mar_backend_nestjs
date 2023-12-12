@@ -72,6 +72,14 @@ export class ContractsController {
     return this.projectsService.listEmployes(id, user);
   }
 
+  @Get("list/schedule/:id")
+  listSchedule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: mar_usr_usuario,
+  ) {
+    return this.projectsService.listSchedule(id, user);
+  }
+
   @Get("get/companies")
   getCompanies() {
     return this.projectsService.getCompanies();

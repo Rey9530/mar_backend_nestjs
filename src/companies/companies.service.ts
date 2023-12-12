@@ -6,9 +6,8 @@ import {
 } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
-import { mar_epr_empresas, mar_usr_usuario } from '@prisma/client';
-import { PrismaService } from 'src/common/services/prisma.service';
-import { ApiResp } from 'src/common/class';
+import { mar_usr_usuario } from '@prisma/client';
+import { PrismaService } from 'src/common/services/prisma.service'; 
 
 @Injectable()
 export class CompaniesService {
@@ -18,7 +17,7 @@ export class CompaniesService {
     try {
       const userFullName = user.usr_nombres + ' ' + user.usr_apellidos;
       var data: any = {
-        epr_codusr: user.usr_codigo,
+        // epr_codusr: user.usr_codigo,
         epr_nombre: createCompanyDto.empre_nombre,
         epr_direccion: createCompanyDto.empre_direccion,
         epr_contacto_nombre: createCompanyDto.empre_contacto_nombre,
@@ -60,7 +59,7 @@ export class CompaniesService {
     try {
       const userFullName = user.usr_nombres + ' ' + user.usr_apellidos;
       var data: any = { 
-        epr_codusr: user.usr_codigo,
+        // epr_codusr: user.usr_codigo,
         epr_nombre: updateCompanyDto.empre_nombre,
         epr_direccion: updateCompanyDto.empre_direccion,
         epr_contacto_nombre: updateCompanyDto.empre_contacto_nombre,
