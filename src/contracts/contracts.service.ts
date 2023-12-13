@@ -7,7 +7,7 @@ import {
 import { PrismaService } from 'src/common/services';
 import { mar_usr_usuario } from '@prisma/client';
 import { convert_date } from 'src/common/helpers/conver_date.heper';
-import { CreateProjectDto, CreateScheduleDto, UpdateProjectDto } from './dto';
+import { CreateProjectDto, CreateScheduleDto, UpdateProjectDto, UpdateScheduleDto } from './dto';
 import { PaginationDto } from 'src/common/dto/Pagination-dto';
 
 @Injectable()
@@ -98,6 +98,7 @@ export class ContractsService {
       data,
     });
   }
+
   async createSchedule(
     createScheduleDto: CreateScheduleDto,
     user: mar_usr_usuario,
@@ -134,6 +135,62 @@ export class ContractsService {
       var hours = [];
       for (let index = 0; index < createScheduleDto.list.length; index++) {
         const element: any = createScheduleDto.list[index];
+        var hour = {
+          hde_codhor: newHours.hor_codigo,
+          hor_coddia: element.day.dia_codigo,
+          hde_inicio_1: this.getHour(element.entrada1),
+          hde_fin_1: this.getHour(element.salida1),
+          hde_inicio_2: this.getHour(element.entrada2),
+          hde_fin_2: this.getHour(element.salida2),
+          hde_usrcrea: usrName,
+          hde_usrmod: usrName,
+        };
+        hours.push(hour);
+      }
+      var saveDb = await this.prisma.mar_hde_detalle_ho.createMany({
+        data: hours,
+      });
+      return saveDb;
+    } catch (error) {
+      console.log(error.toString());
+      return error;
+    }
+  }
+  async updateSchedules(
+    updateScheduleDto: UpdateScheduleDto,
+    user: mar_usr_usuario,
+    id: string,
+  ) { //TODO: TERMINAR ESTOOO
+    try {
+      var contract = await this.prisma.mar_ctr_contratos.findFirst({
+        where: {
+          ctr_codusr: user.usr_codigo,
+          ctr_codigo: id,
+          ctr_estado: 'ACTIVE',
+        },
+      });
+
+      if (!contract)
+        throw new NotFoundException(
+          'El registro del contrato no fue encontrado',
+        );
+
+      var horarios = await this.prisma.mar_hor_horarios.count({
+        where: { hor_codctro: contract.ctr_codigo, hor_estado: 'ACTIVE' },
+      });
+      var usrName = user.usr_nombres + ' ' + user.usr_apellidos;
+      var newHours = await this.prisma.mar_hor_horarios.create({
+        data: {
+          hor_nombre: `Horario ${horarios + 1}`,
+          hor_codctro: contract.ctr_codigo,
+          hor_usrcrea: usrName,
+          hor_usrmod: usrName,
+        },
+      });
+
+      var hours = [];
+      for (let index = 0; index < updateScheduleDto.mar_hde_detalle_ho.length; index++) {
+        const element: any = updateScheduleDto.mar_hde_detalle_ho[index];
         var hour = {
           hde_codhor: newHours.hor_codigo,
           hor_coddia: element.day.dia_codigo,

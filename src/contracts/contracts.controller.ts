@@ -18,6 +18,7 @@ import { mar_usr_usuario } from '@prisma/client';
 import { HEADER_API_BEARER_AUTH } from 'src/common/const';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
 import { PaginationDto } from 'src/common/dto/Pagination-dto';
+import { UpdateScheduleDto } from './dto';
 
 @ApiTags('Contracts')
 @Controller('v1/contracts')
@@ -42,6 +43,16 @@ export class ContractsController {
     @GetUser() user: mar_usr_usuario,
   ) {
     return this.projectsService.createSchedule(createScheduleDto, user, id);
+  }
+
+
+  @Put("schedule/:id")
+  updateSchedules(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateScheduleDto: UpdateScheduleDto,
+    @GetUser() user: mar_usr_usuario,
+  ) {
+    return this.projectsService.updateSchedules(updateScheduleDto, user, id);
   }
 
   @Put("schedule/:asiCode/:codHor")
