@@ -14,7 +14,7 @@ import { PaginationDto } from 'src/common/dto/Pagination-dto';
 export class ContractsService {
   private readonly logger = new Logger('EmployesService');
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(createProjectDto: CreateProjectDto, user: mar_usr_usuario) {
     var ctr_fecha_inicio = convert_date(createProjectDto.ctr_fecha_inicio);
@@ -144,6 +144,7 @@ export class ContractsService {
           hde_fin_2: this.getHour(element.salida2),
           hde_usrcrea: usrName,
           hde_usrmod: usrName,
+          hde_orden: element.day.dia_dia_codigo,
         };
         hours.push(hour);
       }
@@ -162,65 +163,49 @@ export class ContractsService {
     id: string,
   ) { //TODO: TERMINAR ESTOOO
     try {
-      var contract = await this.prisma.mar_ctr_contratos.findFirst({
+      var respDb = await this.prisma.mar_hor_horarios.findFirst({
         where: {
-          ctr_codusr: user.usr_codigo,
-          ctr_codigo: id,
-          ctr_estado: 'ACTIVE',
+          hor_codigo: id,
+          hor_estado: 'ACTIVE',
         },
       });
 
-      if (!contract)
+      if (!respDb)
         throw new NotFoundException(
           'El registro del contrato no fue encontrado',
         );
-
-      var horarios = await this.prisma.mar_hor_horarios.count({
-        where: { hor_codctro: contract.ctr_codigo, hor_estado: 'ACTIVE' },
-      });
       var usrName = user.usr_nombres + ' ' + user.usr_apellidos;
-      var newHours = await this.prisma.mar_hor_horarios.create({
-        data: {
-          hor_nombre: `Horario ${horarios + 1}`,
-          hor_codctro: contract.ctr_codigo,
-          hor_usrcrea: usrName,
-          hor_usrmod: usrName,
-        },
-      });
-
-      var hours = [];
+      var resp = [];
       for (let index = 0; index < updateScheduleDto.mar_hde_detalle_ho.length; index++) {
         const element: any = updateScheduleDto.mar_hde_detalle_ho[index];
         var hour = {
-          hde_codhor: newHours.hor_codigo,
-          hor_coddia: element.day.dia_codigo,
-          hde_inicio_1: this.getHour(element.entrada1),
-          hde_fin_1: this.getHour(element.salida1),
-          hde_inicio_2: this.getHour(element.entrada2),
-          hde_fin_2: this.getHour(element.salida2),
-          hde_usrcrea: usrName,
+          hde_inicio_1: this.getHour(element.hde_inicio_1),
+          hde_fin_1: this.getHour(element.hde_fin_1),
+          hde_inicio_2: this.getHour(element.hde_inicio_2),
+          hde_fin_2: this.getHour(element.hde_fin_2),
           hde_usrmod: usrName,
         };
-        hours.push(hour);
+        var respDB = await this.prisma.mar_hde_detalle_ho.update({
+          where: { hde_codigo: element.hde_codigo },
+          data: hour
+        });
+        resp.push(respDB)
       }
-      var saveDb = await this.prisma.mar_hde_detalle_ho.createMany({
-        data: hours,
-      });
-      return saveDb;
+      return resp;
     } catch (error) {
       console.log(error.toString());
       return error;
     }
   }
   getHour(element) {
-    var hdefin2 = element != null ? element : '00:00';
+    var hdefin2 = element != null ? element : '';
     var dateResp;
     if (hdefin2.length == 7) {
       var h = Number(`${hdefin2[0] + hdefin2[1]}`);
       if (hdefin2[5] == 'P') {
         h = h < 12 ? h + 12 : h;
       }
-      dateResp = `${h}:${hdefin2[0] + hdefin2[1]}`;
+      dateResp = `${h}:${hdefin2[3] + hdefin2[4]}`;
     } else {
       dateResp = hdefin2;
     }
@@ -276,6 +261,30 @@ export class ContractsService {
     });
   }
 
+  async deleteSchedule(id: string, user: mar_usr_usuario) {
+    var data = await this.prisma.mar_hor_horarios.findFirst({
+      where: { hor_codigo: id, hor_estado: 'ACTIVE' },
+    });
+    if (!data) throw new NotFoundException('Registro no encontrado');
+
+    await this.prisma.mar_hor_horarios.update({
+      where: { hor_codigo: id, hor_estado: 'ACTIVE' },
+      data: {
+        hor_estado: 'INACTIVE',
+        hor_usrmod: user.usr_nombres + ' ' + user.usr_apellidos,
+      },
+    });
+
+
+    await this.prisma.mar_hde_detalle_ho.updateMany({
+      where: { hde_codhor: id, hde_estado: 'ACTIVE' },
+      data: {
+        hde_estado: 'INACTIVE',
+        hde_usrmod: user.usr_nombres + ' ' + user.usr_apellidos,
+      },
+    });
+  }
+
   async listSchedule(idCtr: string, user: mar_usr_usuario) {
     var data = await this.prisma.mar_hor_horarios.findMany({
       where: { hor_codctro: idCtr, hor_estado: 'ACTIVE' },
@@ -283,6 +292,7 @@ export class ContractsService {
         hor_codigo: true,
         hor_nombre: true,
         mar_hde_detalle_ho: {
+          orderBy: { hde_orden: 'asc' },
           select: {
             hde_codigo: true,
             hde_codhor: true,

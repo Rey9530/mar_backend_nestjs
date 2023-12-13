@@ -147,6 +147,7 @@ CREATE TABLE "mar_hde_detalle_ho" (
     "hde_codigo" TEXT NOT NULL,
     "hde_codhor" TEXT NOT NULL,
     "hor_coddia" TEXT NOT NULL,
+    "hde_orden" TEXT,
     "hde_inicio_1" TEXT NOT NULL,
     "hde_fin_1" TEXT NOT NULL,
     "hde_inicio_2" TEXT NOT NULL,

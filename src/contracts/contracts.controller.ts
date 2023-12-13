@@ -46,9 +46,9 @@ export class ContractsController {
   }
 
 
-  @Put("schedule/:id")
+  @Put("schedule/:idHor")
   updateSchedules(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('idHor', ParseUUIDPipe) id: string,
     @Body() updateScheduleDto: UpdateScheduleDto,
     @GetUser() user: mar_usr_usuario,
   ) {
@@ -140,5 +140,12 @@ export class ContractsController {
     @Param('id', ParseUUIDPipe) id: string,
     @GetUser() user: mar_usr_usuario,) {
     return this.projectsService.deleteEmployes(id, user);
+  }
+
+  @Delete('schedule/:id')
+  deleteSchedule(
+    @Param('id', ParseUUIDPipe) id: string,
+    @GetUser() user: mar_usr_usuario,) {
+    return this.projectsService.deleteSchedule(id, user);
   }
 }
