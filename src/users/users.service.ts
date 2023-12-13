@@ -89,15 +89,26 @@ export class UsersService {
         usr_apellidos: true,
         usr_contrasenia: true,
         usr_estado: true,
+        usr_inten_inicio: true,
       }, //! OJO!
     });
 
     if (!user) throw new UnauthorizedException('Credenciales incorrectas');
-    if (user.usr_estado == 'INACTIVE')
-      throw new UnauthorizedException('Credenciales incorrectas');
+    if (user.usr_estado == 'INACTIVE' || user.usr_inten_inicio == 3)
+      throw new UnauthorizedException('Usuario bloqueado, favor comunicarse con soporte técnico');
 
-    if (!bcrypt.compareSync(password, user.usr_contrasenia))
+    if (!bcrypt.compareSync(password, user.usr_contrasenia)) {
+      await this.prisma.mar_usr_usuario.update({
+        where: { usr_codigo: user.usr_codigo },
+        data: { usr_inten_inicio: user.usr_inten_inicio + 1 },
+      });
       throw new UnauthorizedException('Credenciales incorrectas');
+    }else{
+      await this.prisma.mar_usr_usuario.update({
+        where: { usr_codigo: user.usr_codigo },
+        data: { usr_inten_inicio: 0 },
+      });
+    }
     delete user.usr_contrasenia;
     var data: any = {
       ...user,
@@ -149,11 +160,15 @@ export class UsersService {
     return resp;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto,user: mar_usr_usuario) {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    user: mar_usr_usuario,
+  ) {
     await this.findOne(id);
     try {
       const { usr_contrasenia, ...resto } = updateUserDto;
-      var data: any = { 
+      var data: any = {
         usr_contrasenia: bcrypt.hashSync(usr_contrasenia, 10),
         usr_usrmod: user.usr_nombres + ' ' + user.usr_apellidos,
         usr_codigo_emple: resto.usr_codigo,

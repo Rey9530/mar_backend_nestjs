@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateEmployeDto } from './dto/create-employe.dto';
 import { UpdateEmployeDto } from './dto/update-employe.dto';
 import { PrismaService } from 'src/common/services';
@@ -54,7 +54,7 @@ export class EmployesService {
           asi_usrcrea: usuariosName,
           asi_usrmod: usuariosName,
           asi_codemp: employe.emp_codigo,
-          asi_codhor: createEmployeDto.marca_asig_hour, 
+          asi_codhor: createEmployeDto.marca_asig_hour,
         };
         await this.prisma.mar_asi_asignacion.create({ data: contract });
       }
@@ -86,7 +86,7 @@ export class EmployesService {
     return await this.prisma.mar_hor_horarios.findMany({
       where: {
         hor_estado: 'ACTIVE',
-        hor_codctro: idCtr, 
+        hor_codctro: idCtr,
       },
       select: { hor_codigo: true, hor_nombre: true },
     });
@@ -123,61 +123,66 @@ export class EmployesService {
   }
 
   async findAll(codeEmploye: PaginationDto) {
-    var or_ = {};
-    if (codeEmploye.query.length > 3) {
-      var arrayWhere = [];
-      var arrayWords = codeEmploye.query.split(' ');
-      arrayWords.forEach((contains) => {
-        if (contains.length > 0) {
-          arrayWhere.push({
-            emp_nombres: {
-              contains,
-              mode: 'insensitive',
-            },
-          });
-          arrayWhere.push({
-            emp_apellidos: {
-              contains,
-              mode: 'insensitive',
-            },
-          });
-          arrayWhere.push({
-            emp_codigo_emp: {
-              contains,
-              mode: 'insensitive',
-            },
-          });
-        }
-      });
-      or_ = { OR: arrayWhere };
-    }
-    var wCompany = {};
-    if (isUUID(codeEmploye.company)) {
-      wCompany = { marca_emp_empre_fk: codeEmploye.company };
-    }
-    var where: any = { ...wCompany, emp_estado: 'ACTIVE', ...or_ };
+    try {
+      var or_ = {};
+      if (codeEmploye.query.length > 3) {
+        var arrayWhere = [];
+        var arrayWords = codeEmploye.query.split(' ');
+        arrayWords.forEach((contains) => {
+          if (contains.length > 0) {
+            arrayWhere.push({
+              emp_nombres: {
+                contains,
+                mode: 'insensitive',
+              },
+            });
+            arrayWhere.push({
+              emp_apellidos: {
+                contains,
+                mode: 'insensitive',
+              },
+            });
+            arrayWhere.push({
+              emp_codigo_emp: {
+                contains,
+                mode: 'insensitive',
+              },
+            });
+          }
+        });
+        or_ = { OR: arrayWhere };
+      }
+      var wCompany = {};
+      if (isUUID(codeEmploye.company)) {
+        wCompany = { emp_codemp: codeEmploye.company };
+      }
+      var where: any = { ...wCompany, emp_estado: 'ACTIVE', ...or_ };
 
-    var employes = await this.prisma.mar_emp_empleados.findMany({
-      where,
-      orderBy: { emp_nombres: 'asc' },
-      include: {
-        mar_gen_generos: true,
-        mar_asi_asignacion: true,
-        mar_con_contrataciones: true,
-        mar_ubi_ubicaciones: true,
-      },
-      take: Number(codeEmploye.quantity),
-      skip: (Number(codeEmploye.page) - 1) * Number(codeEmploye.quantity),
-    });
-    const total = await this.prisma.mar_emp_empleados.count({ where });
-    return {
-      employes,
-      pagination: {
-        page: Number(codeEmploye.page),
-        quantity: Number(codeEmploye.quantity),
-        total,
-      },
-    };
+      var employes = await this.prisma.mar_emp_empleados.findMany({
+        where,
+        orderBy: { emp_nombres: 'asc' },
+        include: {
+          mar_gen_generos: true,
+          mar_asi_asignacion: true,
+          mar_con_contrataciones: true,
+          mar_ubi_ubicaciones: true,
+        },
+        take: Number(codeEmploye.quantity),
+        skip: (Number(codeEmploye.page) - 1) * Number(codeEmploye.quantity),
+      });
+      const total = await this.prisma.mar_emp_empleados.count({ where });
+      return {
+        employes,
+        pagination: {
+          page: Number(codeEmploye.page),
+          quantity: Number(codeEmploye.quantity),
+          total,
+        },
+      };
+    } catch (error) {
+      console.log(error.toString());
+      throw new InternalServerErrorException('Ha ocurrido un error favor intentarlo mas tarde');
+    }
   }
   async generateCode(codeEmploye: CodeEmployeDto) {
     var dateArray = codeEmploye.emp_fecha_nacimiento.split('/');

@@ -97,6 +97,7 @@ model mar_usr_usuario {
   usr_nombres       String
   usr_apellidos     String
   usr_contrasenia   String
+  usr_inten_inicio  Int                 @default(0) @db.SmallInt
   usr_estado        Estado              @default(ACTIVE)
   usr_feccrea       DateTime            @default(now())
   usr_fecmod        DateTime            @default(now()) @db.Timestamptz()
