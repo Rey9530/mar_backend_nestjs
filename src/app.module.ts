@@ -6,6 +6,7 @@ import { EmployesModule } from './employes/employes.module';
 import { ContractsModule } from './contracts/contracts.module';
 import { MarkingsModule } from './markings/markings.module';
 import { SeedModule } from './seed/seed.module'; 
+import { FilesModule } from './files/files.module'; 
 
 @Module({
   imports: [
@@ -15,7 +16,8 @@ import { SeedModule } from './seed/seed.module';
     EmployesModule,
     ContractsModule,
     MarkingsModule,
-    SeedModule,  
+    SeedModule,
+    FilesModule,  
   ],
 })
 export class AppModule { }
