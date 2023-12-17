@@ -26,7 +26,7 @@ WORKDIR /usr/src/app
 COPY package.json yarn.lock ./
 
 RUN yarn install --prod 
-COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/dist ./
 COPY prisma ./prisma/
 RUN npx prisma generate
 
@@ -43,4 +43,4 @@ RUN npx prisma generate
 
 # EXPOSE 3000
 
-CMD [ "node","dist/main","npx", "prisma", "migrate", "deploy" ]
+CMD [ "node","main" ]

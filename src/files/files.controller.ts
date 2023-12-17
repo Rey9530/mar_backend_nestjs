@@ -3,21 +3,23 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
+  Param,
 } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
 import { imageFileFilter } from 'src/common/helpers';
+import { UPLOADFILE } from 'src/common/const';
 
 
 
 @Controller('files')
 @ApiTags('Upload')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  constructor(private readonly filesService: FilesService) { }
 
-  @Post()
+  @Post(':code')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Archivo a subir',
@@ -35,15 +37,53 @@ export class FilesController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
-        destination: './uploads',
-        filename: (req, file, cb) => {
-          cb(null, file.originalname);
+        destination: UPLOADFILE,
+        filename: (_, file, cb) => {
+          var splitName = file.originalname.split(".");
+          cb(null, new Date().getTime() + `.${splitName[1]}`);
         },
       }),
-      // fileFilter: imageFileFilter
+      fileFilter: imageFileFilter
     }),
   )
-  uploadFile(@UploadedFile() file) {
+  uploadFile(
+    @UploadedFile() file,
+    @Param('code') code: string,
+  ) {
+    return this.filesService.renameFile(file, code);
+  }
+
+
+  @Post('')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Archivo a subir',
+    type: 'multipart/form-data',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads_temp',
+        filename: (_, file, cb) => {
+          var splitName = file.originalname.split(".");
+          cb(null, new Date().getTime() + `.${splitName[1]}`);
+        },
+      }),
+      fileFilter: imageFileFilter
+    }),
+  )
+  uploadFilee(
+    @UploadedFile() file,
+  ) {
     return file;
   }
 }
