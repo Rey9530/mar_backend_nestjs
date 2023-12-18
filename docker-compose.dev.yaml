@@ -2,12 +2,12 @@
 version: '3.1'
 
 services:  
-  nestjsapp:
+  nestjsapp-dev:
     depends_on:
       - db-facial
     build: 
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     image: nestjs-docker
     container_name: nestjsapp
     restart: always # reiniciar el contenedor si se detiene
@@ -17,10 +17,10 @@ services:
     networks:
       - network-mar 
     volumes: 
+    #   - .:/usr/src/app
       - volumen_db:/usr/src/app/uploads
       - volumen_db_temp:/usr/src/app/uploads_temp 
     
-
   db-facial:
     image: postgres:15.2-alpine
     container_name: ${DB_HOST}

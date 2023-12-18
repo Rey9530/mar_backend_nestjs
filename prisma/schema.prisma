@@ -145,8 +145,8 @@ model mar_hde_detalle_ho {
   hde_codigo       String           @id(map: "mar_hde_pk") @default(uuid())
   hde_codhor       String
   mar_hor_horarios mar_hor_horarios @relation(fields: [hde_codhor], references: [hor_codigo], onDelete: NoAction, onUpdate: NoAction, map: "mar_hde_hor_fk")
-  hor_coddia       String
-  mar_dia_dias     mar_dia_dias     @relation(fields: [hor_coddia], references: [dia_codigo], onDelete: NoAction, onUpdate: NoAction, map: "mar_hor_dia_fk")
+  hde_coddia       String
+  mar_dia_dias     mar_dia_dias     @relation(fields: [hde_coddia], references: [dia_codigo], onDelete: NoAction, onUpdate: NoAction, map: "mar_hor_dia_fk")
   hde_orden        String?
   hde_inicio_1     String
   hde_fin_1        String
@@ -175,10 +175,10 @@ model mar_asi_asignacion {
 
 model mar_his_historial {
   his_codigo         String             @id(map: "mar_his_pk") @default(uuid())
-  his_hora_entrada   DateTime
-  his_hora_salida    DateTime
-  his_tp_trabajado   DateTime           @db.Time()
-  his_tp_extra       DateTime           @db.Time()
+  his_hora_entrada   DateTime?
+  his_hora_salida    DateTime?
+  his_tp_trabajado   String            
+  his_tp_extra       String            
   emp_estado         Estado             @default(ACTIVE)
   his_feccrea        DateTime           @default(now())
   his_fecmod         DateTime           @default(now()) @db.Timestamptz()

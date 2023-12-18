@@ -50,11 +50,12 @@ export class FilesController {
     @UploadedFile() file,
     @Param('code') code: string,
   ) {
+    console.log(file)
     return this.filesService.renameFile(file, code);
   }
 
 
-  @Post('')
+  @Post()
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Archivo a subir',
@@ -84,7 +85,8 @@ export class FilesController {
   uploadFilee(
     @UploadedFile() file,
   ) {
-    return file;
+    console.log(file);
+    return this.filesService.identify(file);
   }
 }
 

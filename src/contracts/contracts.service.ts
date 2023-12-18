@@ -137,7 +137,7 @@ export class ContractsService {
         const element: any = createScheduleDto.list[index];
         var hour = {
           hde_codhor: newHours.hor_codigo,
-          hor_coddia: element.day.dia_codigo,
+          hde_coddia: element.day.dia_codigo,
           hde_inicio_1: this.getHour(element.entrada1),
           hde_fin_1: this.getHour(element.salida1),
           hde_inicio_2: this.getHour(element.entrada2),
@@ -204,8 +204,8 @@ export class ContractsService {
       var h = Number(`${hdefin2[0] + hdefin2[1]}`);
       if (hdefin2[5] == 'P') {
         h = h < 12 ? h + 12 : h;
-      }
-      dateResp = `${h}:${hdefin2[3] + hdefin2[4]}`;
+      } 
+      dateResp = `${h < 10 ? '0' : ''}${h}:${hdefin2[3] + hdefin2[4]}`; 
     } else {
       dateResp = hdefin2;
     }
@@ -296,7 +296,7 @@ export class ContractsService {
           select: {
             hde_codigo: true,
             hde_codhor: true,
-            hor_coddia: true,
+            hde_coddia: true,
             hde_inicio_1: true,
             hde_fin_1: true,
             hde_inicio_2: true,
