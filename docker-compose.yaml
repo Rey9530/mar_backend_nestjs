@@ -5,10 +5,11 @@ services:
   nestjsapp:
     depends_on:
       - db-facial
-    build: 
-      context: .
-      dockerfile: Dockerfile
-    image: nestjs-docker
+    # build: 
+    #   context: .
+    #   dockerfile: Dockerfile
+    #image: nestjs-docker
+    image: localhost/marcacion-backend
     container_name: nestjsapp
     restart: always # reiniciar el contenedor si se detiene
     ports:

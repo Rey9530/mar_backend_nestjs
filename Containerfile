@@ -33,6 +33,8 @@ COPY --from=builder /app/dist ./
 COPY prisma ./prisma/
 RUN npx prisma generate
 
+#RUN npx prisma migrate deploy
+
 # # Copiar el directorio y su contenido
 # RUN mkdir -p ./pokedex
 
