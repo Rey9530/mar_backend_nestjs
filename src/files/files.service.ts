@@ -1,18 +1,26 @@
-import { Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as fs from 'fs';
 import { UPLOADFILE } from 'src/common/const';
 import { PrismaService } from 'src/common/services';
 import { promisify } from 'util';
 import axios, { AxiosResponse } from 'axios';
 import { mar_his_historial } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FilesService {
   private readonly renameAsync = promisify(fs.rename);
   private readonly unlinkAsync = promisify(fs.unlink);
   private readonly accessAsync = promisify(fs.access);
-  constructor(private readonly prisma: PrismaService) { }
-
+  constructor(
+    private readonly prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async fileExists(filePath: string): Promise<boolean> {
     try {
@@ -23,12 +31,12 @@ export class FilesService {
     }
   }
   async renameFile(file: any, code: string): Promise<void> {
-    var newPath = UPLOADFILE + "/" + code + ".png";
+    var newPath = UPLOADFILE + '/' + code + '.png';
     var user = await this.prisma.mar_emp_empleados.findFirst({
       where: {
         emp_codigo_emp: code,
-        emp_estado: 'ACTIVE'
-      }
+        emp_estado: 'ACTIVE',
+      },
     });
     if (!user) {
       await this.unlinkAsync(file.path);
@@ -41,7 +49,6 @@ export class FilesService {
       throw new UnauthorizedException('Empleado ya esta enrolado');
     }
 
-
     try {
       await this.renameAsync(file.path, newPath);
       console.log(`Archivo renombrado de ${file.path} a ${newPath}`);
@@ -52,23 +59,24 @@ export class FilesService {
     }
   }
 
-
   async identify(file: any): Promise<any> {
     const exists = await this.fileExists(file.path);
     if (!exists) {
-      throw new UnauthorizedException('Ha ocurrido un error al generar el escaneo');
+      throw new UnauthorizedException(
+        'Ha ocurrido un error al generar el escaneo',
+      );
     }
-    var name = file.filename.split(".");
+    var name = file.filename.split('.');
     var employee_code = await this.obtenerDatos(name[0]);
     if (employee_code == 'no encontrada') {
       throw new UnauthorizedException('Empleado no encontrado');
     }
-    var code = employee_code.replace(".png", "");
+    var code = employee_code.replace('.png', '');
     var employe = await this.prisma.mar_emp_empleados.findFirst({
       where: {
         emp_codigo_emp: code,
-        emp_estado: 'ACTIVE'
-      }
+        emp_estado: 'ACTIVE',
+      },
     });
     if (!employe) {
       throw new UnauthorizedException('Empleado no encontrado');
@@ -76,29 +84,29 @@ export class FilesService {
     var empAsig = await this.prisma.mar_asi_asignacion.findFirst({
       where: {
         asi_codemp: employe.emp_codigo,
-        asi_estado: 'ACTIVE'
+        asi_estado: 'ACTIVE',
       },
       include: {
-        mar_hor_horarios: true
-      }
+        mar_hor_horarios: true,
+      },
     });
     if (!empAsig) {
-      throw new InternalServerErrorException('El empleado no horario asignado, verificar con el administrador del contrato');
+      throw new InternalServerErrorException(
+        'El empleado no horario asignado, verificar con el administrador del contrato',
+      );
     }
     // var days = await this.prisma.mar_dia_dias.findFirst({
     //   where: {
     //     dia_dia_codigo: day,
     //     dia_estado: 'ACTIVE'
     //   },
-    // }); 
-
-
+    // });
 
     var his = await this.prisma.mar_his_historial.findFirst({
       where: {
         his_codasi: empAsig.asi_codigo,
         his_hora_salida: null,
-        emp_estado: 'ACTIVE'
+        emp_estado: 'ACTIVE',
       },
     });
     var respApi;
@@ -147,12 +155,12 @@ export class FilesService {
         his_hora_salida: marcacion_hora,
         // his_tp_trabajado: horas_trabajadas.toString(),
         // his_tp_extra: (horas_deber_cumplir > 0 ? (horas_trabajadas - horas_deber_cumplir) : "0").toString(),
-        his_usrmod: employe.emp_nombres + " " + employe.emp_apellidos,
-        his_codasi: empAsig.asi_codigo
-      }
+        his_usrmod: employe.emp_nombres + ' ' + employe.emp_apellidos,
+        his_codasi: empAsig.asi_codigo,
+      };
       respApi = await this.prisma.mar_his_historial.update({
         where: { his_codigo: his.his_codigo, emp_estado: 'ACTIVE' },
-        data: datos
+        data: datos,
       });
     } else {
       var data = {
@@ -160,20 +168,18 @@ export class FilesService {
         his_hora_salida: null,
         his_tp_trabajado: '0',
         his_tp_extra: '0',
-        his_usrcrea: employe.emp_nombres + " " + employe.emp_apellidos,
-        his_usrmod: employe.emp_nombres + " " + employe.emp_apellidos,
-        his_codasi: empAsig.asi_codigo
-      }
+        his_usrcrea: employe.emp_nombres + ' ' + employe.emp_apellidos,
+        his_usrmod: employe.emp_nombres + ' ' + employe.emp_apellidos,
+        his_codasi: empAsig.asi_codigo,
+      };
       respApi = await this.prisma.mar_his_historial.create({
-        data
+        data,
       });
     }
     return {
-      "empleado": employe.emp_nombres + " " + employe.emp_apellidos,
-      "hora": this.formatAMPM(marcacion_hora),
+      empleado: employe.emp_nombres + ' ' + employe.emp_apellidos,
+      hora: this.formatAMPM(marcacion_hora),
     };
-
-
   }
 
   formatAMPM(date) {
@@ -198,8 +204,10 @@ export class FilesService {
 
   async obtenerDatos(path): Promise<any> {
     try {
-      const respuesta: AxiosResponse = await axios.get(`https://cel-bp.relex-dev.com/${path}`);
-      console.log(respuesta.data)
+      var path_ = `${this.configService.get('URL_PYTHON')}/${path}`;
+      console.log(path_);
+      const respuesta: AxiosResponse = await axios.get(path_);
+      console.log(respuesta.data);
       return respuesta.data.persona;
     } catch (error) {
       throw new Error(`Error al obtener datos: ${error.message}`);
@@ -207,9 +215,14 @@ export class FilesService {
   }
 
   getDate(hora: string = '00', minutos: string = '00') {
-
     var date = new Date();
-    var retrunDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), Number(hora), Number(minutos));
+    var retrunDate = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      Number(hora),
+      Number(minutos),
+    );
     return retrunDate;
   }
 }
