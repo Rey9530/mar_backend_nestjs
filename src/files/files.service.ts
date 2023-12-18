@@ -198,7 +198,7 @@ export class FilesService {
 
   async obtenerDatos(path): Promise<any> {
     try {
-      const respuesta: AxiosResponse = await axios.get(`http://python-api:8000/${path}`);
+      const respuesta: AxiosResponse = await axios.get(`http://64.227.96.125:8000/${path}`);
       console.log(respuesta.data)
       return respuesta.data.persona;
     } catch (error) {
