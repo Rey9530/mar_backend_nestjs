@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query, Res, StreamableFile, Header } from '@nestjs/common';
 import { MarkingsService } from './markings.service';
 import { CreateMarkingDto } from './dto/create-marking.dto';
 import { UpdateMarkingDto } from './dto/update-marking.dto';
@@ -6,6 +6,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Auth } from 'src/users/decorators';
 import { HEADER_API_BEARER_AUTH } from 'src/common/const';
 import { FilterDTO } from './dto/filter.dto';
+import { Response } from 'express';
 
 @ApiTags('Markings')
 @Controller('v1/markings')
@@ -22,9 +23,23 @@ export class MarkingsController {
   @Get('list/contract/:id')
   getAllMarkings(
     @Param('id', ParseUUIDPipe) id: string,
-    @Query() filterDTO: FilterDTO 
+    @Query() filterDTO: FilterDTO
   ) {
-    return this.markingsService.getAllMarkings(id,filterDTO);
+    return this.markingsService.getAllMarkings(id, filterDTO);
+  }
+
+  @Get('excel/contract/:id')
+  async excelAllMarkings(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() filterDTO: FilterDTO,
+    @Res() res: Response,
+  ) {
+    var buffer: any = await this.markingsService.excelAllMarkings(id, filterDTO);
+    const filename = 'report.xlsx';
+
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.end(buffer);
   }
 
   @Get(':id')
